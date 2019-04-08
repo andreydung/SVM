@@ -10,7 +10,7 @@ def plot_margin(X1_train, X2_train, clf):
 
     pl.plot(X1_train[:,0], X1_train[:,1], "ro")
     pl.plot(X2_train[:,0], X2_train[:,1], "bo")
-    pl.scatter(clf.X_support[:,0], clf.X_support[:,1], s=100, c="g")
+    pl.scatter(clf.X[:,0], clf.X[:,1], s=100, c="g")
 
     # w.x + b = 0
     a0 = -4; a1 = f(a0, clf.w, clf.bias)
@@ -33,7 +33,7 @@ def plot_margin(X1_train, X2_train, clf):
 def plot_contour(X1_train, X2_train, clf):
     pl.plot(X1_train[:,0], X1_train[:,1], "ro")
     pl.plot(X2_train[:,0], X2_train[:,1], "bo")
-    pl.scatter(clf.X_support[:,0], clf.X_support[:,1], s=100, c="g")
+    pl.scatter(clf.X[:,0], clf.X[:,1], s=100, c="g")
 
     X1, X2 = np.meshgrid(np.linspace(-6,6,50), np.linspace(-6,6,50))
     X = np.array([[x1, x2] for x1, x2 in zip(np.ravel(X1), np.ravel(X2))])
