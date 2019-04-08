@@ -20,11 +20,13 @@ class SVM:
     def __init__(self, kernel_function, C):
         self.kernel_function = kernel_function
         self.C = C
-        self.support_threshold = 1e-5
 
         self.alpha = None
         self.w = None
         self.bias = None
+
+        self.X = None
+        self.Y = None
 
     def kernel(self, X1, X2):
         if X1.ndim == 1 and X2.ndim == 1:
@@ -52,6 +54,15 @@ class SVM:
 
     def project(self, X_train, Y_train, X_test):
         return np.dot(self.alpha * Y_train, self.kernel(X_train, X_test)) - self.bias
+
+    def predict(self, X_test):
+        return np.sign(self.project(self.X, self.Y, X))
+
+    def keep_support_vector(self, support_threshold=1e-5):
+        mask = self.alpha > support_threshold
+        self.alpha = self.alpha[mask]
+        self.X = self.X[mask]
+        self.Y = self.Y[mask]
 
 
 class SMO(SVM):
@@ -135,7 +146,7 @@ class SMO(SVM):
 
     def take_step(self, i1, i2):
 
-        print("Pair: {}, {}".format(i1, i2))
+        # print("Pair: {}, {}".format(i1, i2))
     
         # Skip if chosen alphas are the same
         if i1 == i2:
