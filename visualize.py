@@ -37,7 +37,7 @@ def plot_contour(X1_train, X2_train, clf):
 
     X1, X2 = np.meshgrid(np.linspace(-6,6,50), np.linspace(-6,6,50))
     X = np.array([[x1, x2] for x1, x2 in zip(np.ravel(X1), np.ravel(X2))])
-    Z = clf.project(X).reshape(X1.shape)
+    Z = clf.project(clf.X, clf.Y, X).reshape(X1.shape)
     pl.contour(X1, X2, Z, [0.0], colors='k', linewidths=1, origin='lower')
     pl.contour(X1, X2, Z + 1, [0.0], colors='grey', linewidths=1, origin='lower')
     pl.contour(X1, X2, Z - 1, [0.0], colors='grey', linewidths=1, origin='lower')

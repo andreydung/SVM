@@ -56,14 +56,16 @@ class SVM:
         return np.dot(self.alpha * Y_train, self.kernel(X_train, X_test)) - self.bias
 
     def predict(self, X_test):
-        return np.sign(self.project(self.X, self.Y, X))
+        return np.sign(self.project(self.X, self.Y, X_test))
 
-    def keep_support_vector(self, support_threshold=1e-5):
-        mask = self.alpha > support_threshold
-        self.alpha = self.alpha[mask]
-        self.X = self.X[mask]
-        self.Y = self.Y[mask]
-
+    @staticmethod
+    def keep_support_vector(alpha, X, Y, support_threshold=1e-5):
+        mask = alpha > support_threshold
+        alpha = alpha[mask]
+        X = X[mask]
+        Y = Y[mask]
+        
+        return alpha, X, Y
 
 class SMO(SVM):
 
@@ -106,7 +108,9 @@ class SMO(SVM):
             if examineAll:
                 examineAll = False
             elif numChanged == 0:
-                examineAll = True        
+                examineAll = True
+
+        self.alpha, self.X, self.Y = SMO.keep_support_vector(self.alpha, self.X, self.Y)        
 
     def examine_example(self, i):
         
