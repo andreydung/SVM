@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import numpy as np
 from cvxopt import matrix, solvers
 from sklearn.datasets import load_breast_cancer
@@ -16,7 +17,7 @@ def rbf_kernel(a, b, sigma=0.1):
     return np.exp(-np.square(np.linalg.norm(a - b))/(2 * np.power(sigma,2)))
 
 
-class SVM:
+class SVM(ABC):
     def __init__(self, kernel_function, C):
         self.kernel_function = kernel_function
         self.C = C
@@ -27,6 +28,10 @@ class SVM:
 
         self.X = None
         self.Y = None
+
+    @abstractmethod
+    def fit(self):
+        pass
 
     def kernel(self, X1, X2):
         if X1.ndim == 1 and X2.ndim == 1:
@@ -61,11 +66,56 @@ class SVM:
     @staticmethod
     def keep_support_vector(alpha, X, Y, support_threshold=1e-5):
         mask = alpha > support_threshold
+        index = np.arange(len(alpha))[mask]
         alpha = alpha[mask]
         X = X[mask]
         Y = Y[mask]
         
-        return alpha, X, Y
+        return alpha, X, Y, index, mask
+
+class CVX(SVM):
+
+    def __init__(self, kernel_function, C=1000):
+        super().__init__(kernel_function, C)
+
+    def fit(self, X, Y):
+        self.X = X
+        self.Y = Y
+
+        num_samples = X.shape[0]
+        num_features = X.shape[1]
+
+        kernel = self.kernel(X, X)
+
+        # solve using CVXOPT optimizer
+        P = matrix(np.outer(Y, Y) * kernel)
+        q = matrix(- np.ones(num_samples))
+        A = matrix(Y, (1, num_samples))
+        b = matrix(0.0)
+
+        if self.C is None:
+            G = matrix(- np.eye(num_samples))
+            h = matrix(np.zeros(num_samples))
+        else:
+            tmp1 = np.diag(np.ones(num_samples) * -1)
+            tmp2 = np.identity(num_samples)
+            G = matrix(np.vstack((tmp1, tmp2)))
+            tmp1 = np.zeros(num_samples)
+            tmp2 = np.ones(num_samples) * self.C
+            h = matrix(np.hstack((tmp1, tmp2)))
+
+        sol = solvers.qp(P, q, G, h, A, b)
+        self.alpha = np.ravel(sol['x'])
+
+        self.alpha, self.X, self.Y, index, mask = SVM.keep_support_vector(self.alpha, self.X, self.Y)        
+
+        # Bias parameter
+        self.bias = 0
+        for i in range(len(self.alpha)):
+            self.bias -= self.Y[i]
+            self.bias += np.sum(self.alpha * self.Y * kernel[index[i], mask])
+        self.bias /= len(self.alpha)
+
 
 class SMO(SVM):
 
@@ -110,7 +160,7 @@ class SMO(SVM):
             elif numChanged == 0:
                 examineAll = True
 
-        self.alpha, self.X, self.Y = SMO.keep_support_vector(self.alpha, self.X, self.Y)        
+        self.alpha, self.X, self.Y, _, _ = SMO.keep_support_vector(self.alpha, self.X, self.Y)        
 
     def examine_example(self, i):
         
